@@ -9,7 +9,7 @@ Build a Docker image that spins up an OhMyPi (OMP) capable instance with all com
 ## Current State
 
 - **Dockerfile**: Minimal — Ubuntu 24.04 base, installs `curl git ca-certificates ripgrep clangd`, renames user to `slava`, installs OMP binary via `curl -fsSL https://omp.sh/install | bash`
-- **LSP binaries present**: Only `clangd` (C/C++)
+ - **LSP binaries present**: 22 of 52 OMP built-in servers on PATH (42% coverage). See **[LSP-AVAILABILITY.md](LSP-AVAILABILITY.md)** for full report.
 - **Missing toolchains**: No Python, Node.js, Go, Rust, Ruby, Lua, Java, PHP, or any language runtime that LSP servers depend on
 - **MCP config**: Configured with `duckduckgo-mcp-server` (uses `uv`)
 - **OMP version**: v16.1.16 (standalone Go binary)
@@ -91,6 +91,7 @@ See **[LSP-SERVERS.md](LSP-SERVERS.md)** for the complete inventory of all 60+ b
 - **[AGENTS.md](AGENTS.md)** — This file. Agent guidelines for this project.
 - **[LSP-SERVERS.md](LSP-SERVERS.md)** — Complete LSP server inventory (52 servers), root marker mapping, runtime dependencies, install methods, LSP operations reference, and configuration schema.
 - **[DOCKERFILE-GUIDE.md](DOCKERFILE-GUIDE.md)** — Dockerfile structure, multi-stage build patterns, LSP marker system, and optimization tips.
+- **[LSP-AVAILABILITY.md](LSP-AVAILABILITY.md)** — Live report of which LSP servers are available on PATH, with coverage percentage and missing server details.
 
 ## Relevant Docs
 
@@ -99,3 +100,4 @@ See **[LSP-SERVERS.md](LSP-SERVERS.md)** for the complete inventory of all 60+ b
 | [LSP-SERVERS.md](LSP-SERVERS.md) | Full 60+ server inventory, runtime dependencies, LSP operations, config schema |
 | [DOCKERFILE-GUIDE.md](DOCKERFILE-GUIDE.md) | Dockerfile architecture, multi-stage builds, image optimization |
 | [OMP-CONFIG.md](OMP-CONFIG.md) | OMP configuration reference, LSP settings, agent definitions |
+| [LSP-AVAILABILITY.md](LSP-AVAILABILITY.md) | Current LSP server availability report (22/52 on PATH, 42% coverage) |
