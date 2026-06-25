@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "perlnavigator": {
+      "command": "perlnavigator",
+      "args": ["--stdio"],
+      "fileTypes": [".pl", ".pm"],
+      "rootMarkers": [".git"]
+    }
+  }
+}

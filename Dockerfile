@@ -98,6 +98,14 @@ FROM ruby:3.3 AS ruby-lsp
 RUN gem install --no-document solargraph ruby-lsp rubocop
 
 # ============================================================
+# Stage 7.5: Perl LSP servers
+# ============================================================
+FROM node:lts AS perl-lsp
+RUN npm install -g perlnavigator-server
+
+FROM perl:5.38-slim AS perl-runtime
+RUN cpanm --quiet --no-interaction PPI Class::Inspector Devel::Symdump Sub::Util Scalar::Util List::Util File::Spec Storable File::Basename Encode 2>/dev/null || true
+# ============================================================
 # Stage 7: Erlang/Elixir servers
 # ============================================================
 FROM erlang:26 AS erlang-lsp
@@ -149,6 +157,10 @@ COPY --from=jvm-lsp /opt/jdtls /opt/jdtls
 COPY --from=jvm-lsp /usr/local/bin/metals /usr/local/bin/metals
 COPY --from=ruby-lsp /usr/local/bin /usr/local/bin
 COPY --from=erlang-lsp /usr/local/bin /usr/local/bin
+COPY --from=perl-lsp /usr/local/bin/perlnavigator /usr/local/bin/perlnavigator
+COPY --from=perl-runtime /usr/local/bin/perl /usr/local/bin/perl
+COPY --from=perl-runtime /usr/local/lib/perl5 /usr/local/lib/perl5
+COPY --from=perl-runtime /etc/perl /etc/perl
 
 # Create non-root user
 RUN sed -ie 's/ubuntu/slava/g' /etc/passwd* /etc/group* \
