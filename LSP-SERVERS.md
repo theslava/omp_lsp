@@ -3,7 +3,7 @@
 This document covers every LSP server included in the OhMyPi Docker image, sourced from OMP's built-in `defaults.json` (source: `packages/coding-agent/src/lsp/defaults.json` in the oh-my-pi repo).
 ## LSP Root Markers
 
-OMP auto-discovers servers by checking if the project workspace directory contains at least one of each server's `rootMarkers`. The `lsp-markers/` directory contains the minimal set of empty files to trigger all 52 built-in servers.
+OMP auto-discovers servers by checking if the project workspace directory contains at least one of each server's `rootMarkers` (defined in `defaults.json`). The `lsp-markers/` directory contains the minimal set of empty files to trigger all 53 built-in servers plus custom servers like perlnavigator.
 
 ### Marker → Server Mapping
 
@@ -46,9 +46,14 @@ OMP auto-discovers servers by checking if the project workspace directory contai
 | `schema.prisma` | prismals |
 | `svelte.config.js` | svelte |
 | `tailwind.config.js` | tailwindcss |
+| `.perl-lsp-marker` | perlnavigator |
 | `empty.tla` | tlaplus (via `*.tla` glob) |
 
-**34 marker files → 52 unique LSP servers.** Some markers trigger multiple servers (e.g., `Gemfile` → 3, `build.gradle` → 3, `package.json` → 5). The set is optimized via greedy set cover.
+**35 marker files → 53 unique LSP servers.** Some markers trigger multiple servers (e.g., `Gemfile` → 3, `build.gradle` → 3, `package.json` → 5). The set is optimized via greedy set cover.
+
+### Custom Markers
+
+For servers not in OMP's built-in defaults (like perlnavigator), create a custom marker file in your project root. OMP will use it for discovery when the server is registered in `lsp.json`. Example: touch `.perl-lsp-marker` for Perl projects.
 
 ## OMP LSP Architecture
 
@@ -329,7 +334,20 @@ All servers below ship in OMP's `defaults.json` and are eligible for auto-detect
 | Server Key | Binary | Install Method |
 |-----------|--------|---------------|
 | `intelephense` | `intelephense` | `npm i -g intelephense` (requires Node.js LTS) |
-| `phpactor` | `phpactor` | `composer global require phpactor` (requires PHP) |
+
+### Perl
+
+| Server Key | Binary | Install Method |
+|-----------|--------|---------------|
+| `perlnavigator` | `perlnavigator` | `npm install -g perlnavigator-server` (requires Node.js LTS); needs PPI, Class::Inspector, Devel::Symdump, Sub::Util, Scalar::Util, List::Util, File::Spec, Storable, File::Basename, Encode; also requires gcc for XS module compilation during install |
+
+**Perl tooling**: `perl-critic` (static analysis), `perl-tidy` (formatting), `perlimports` (import cleanup) installed via cpanm for full perlnavigator feature support.
+
+| Tool Key | Binary | Purpose |
+|----------|--------|---------|
+| `perl-critic` | `perlcritic` | Static code analysis / linting |
+| `perl-tidy` | `perltidy` | Code formatting |
+| `perlimports` | `perlimports` | Import statement management |
 
 ### C#
 
@@ -500,7 +518,12 @@ These require Node.js LTS installed globally:
 
 - `solargraph` (Ruby)
 - `ruby-lsp` (Ruby)
-- `rubocop` (Ruby linter)
+
+### Perl Runtime Required
+
+- `perlnavigator` (Perl LSP)
+- `perl-critic` (Perl linter / static analysis)
+- `perl-tidy` (Perl formatter)
 
 ### Go Runtime Required (for build)
 
@@ -627,7 +650,22 @@ RUN gem install solargraph ruby-lsp rubocop
 # Stage 7: Erlang/Elixir servers
 # ============================================================
 FROM erlang:26 AS erlang-lsp
-RUN mix escript.install hex elixir_ls  # or download prebuilt
+
+# ============================================================
+# Stage 7.5: Perl LSP servers
+# ============================================================
+FROM node:lts AS perl-lsp
+RUN npm install -g perlnavigator-server
+
+FROM perl:5.38-slim AS perl-runtime
+RUN apt-get update && apt-get install -y --no-install-recommends gcc \
+    && cpanm --quiet --no-interaction PPI Class::Inspector Devel::Symdump Sub::Util Scalar::Util List::Util File::Spec Storable File::Basename Encode Perl::Critic Perl::Tidy App::perlimports \
+    && apt-get purge -y gcc && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
+COPY --from=perl-lsp /usr/local/bin/perlnavigator /usr/local/bin/perlnavigator
+COPY --from=perl-runtime /usr/local/bin/perl /usr/local/bin/perl
+COPY --from=perl-runtime /usr/local/lib/perl5 /usr/local/lib/perl5
+COPY --from=perl-runtime /etc/perl /etc/perl
 
 # ============================================================
 # Stage 8: Final image
@@ -692,10 +730,10 @@ CMD ["omp"]
 | Standalone binaries (rust-analyzer, zls, terraform-ls, etc.) | ~50MB |
 | JVM servers (jdtls, metals) | ~200MB |
 | Ruby gems | ~30MB |
-| Erlang/Elixir servers | ~20MB |
-| **Estimated total** | **~730MB** |
+| Perl LSP + tooling (perlnavigator, perlcritic, perltidy) | ~45MB |
+| **Estimated total** | **~775MB** |
 
-Using `node:lts`, `python:3.12-slim`, `golang:1.22-bookworm`, `eclipse-temurin:21-jdk`, `ruby:3.3`, `erlang:26` as builder stages adds significant temporary space but doesn't affect the final image.
+Using `node:lts`, `python:3.12-slim`, `golang:1.22-bookworm`, `eclipse-temurin:21-jdk`, `ruby:3.3`, `erlang:26`, and `perl:5.38-slim` as builder stages adds significant temporary space but doesn't affect the final image.
 
 ## .dockerignore
 
@@ -750,8 +788,8 @@ docker run --rm omp-lsp:latest bash -c '
     dockerfile-language-server-nodejs graphql-lsp prismals vim-language-server \
     emmet-language-server pyright-langserver basedpyright pylsp ruff \
     lua-language-server terraform-ls marksman texlab helm_ls \
-    solargraph ruby-lsp rubocop; do
-    which $bin && echo "OK: $bin" || echo "MISSING: $bin"
+    perlnavigator perlcritic perltidy perlimports
+
   done
 '
 
@@ -775,7 +813,7 @@ docker run --rm omp-lsp:latest bash -c '
     solargraph ruby-lsp rubocop jdtls metals hls ocamllsp elixirls expert \
     erlangls gleam solargraph ruby-lsp rubocop intelephense phpactor \
     omnisharp nixd nil ols dartls sourcekit-lsp swiftlint tlapm_lsp \
-    marksman texlab helm_ls; do
+    perlnavigator perl-critic perltidy perlimports; do
     if which $bin >/dev/null 2>&1; then
       ((count++))
     else
