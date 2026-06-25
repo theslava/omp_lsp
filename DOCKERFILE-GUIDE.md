@@ -134,7 +134,7 @@ For LSP servers that require build toolchains (Go, Rust, Node.js, JVM, Ruby, Erl
 FROM golang:1.22-bookworm AS gopls-builder
 RUN go install golang.org/x/tools/gopls@v0.18.0
 
-FROM node:20-bookworm AS node-builder
+FROM node:lts AS node-builder
 RUN npm install -g typescript@5.5.4 typescript-language-server@4.3.3
 
 # Stage 2: Final image
@@ -160,7 +160,7 @@ The Dockerfile should be rewritten to include all 60+ built-in LSP servers from 
 # ============================================================
 # Stage 1: Node.js LSP servers
 # ============================================================
-FROM node:20-bookworm AS node-lsp
+FROM node:lts AS node-lsp
 RUN npm install -g \
     typescript@5.x \
     typescript-language-server@4.x \
@@ -316,7 +316,7 @@ CMD ["omp"]
 | Erlang/Elixir servers | ~20MB |
 | **Estimated total** | **~730MB** |
 
-Using `node:20-bookworm`, `python:3.12-slim`, `golang:1.22-bookworm`, `eclipse-temurin:21-jdk`, `ruby:3.3`, `erlang:26` as builder stages adds significant temporary space but doesn't affect the final image.
+Using `node:lts`, `python:3.12-slim`, `golang:1.22-bookworm`, `eclipse-temurin:21-jdk`, `ruby:3.3`, `erlang:26` as builder stages adds significant temporary space but doesn't affect the final image.
 
 ## .dockerignore
 

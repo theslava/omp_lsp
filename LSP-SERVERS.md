@@ -539,7 +539,7 @@ The Docker image should use multi-stage builds to keep the final image lean:
 # ============================================================
 # Stage 1: Node.js LSP servers
 # ============================================================
-FROM node:20-bookworm AS node-lsp
+FROM node:lts AS node-lsp
 RUN npm install -g \
     typescript@5.x \
     typescript-language-server@4.x \
@@ -695,7 +695,7 @@ CMD ["omp"]
 | Erlang/Elixir servers | ~20MB |
 | **Estimated total** | **~730MB** |
 
-Using `node:20-bookworm`, `python:3.12-slim`, `golang:1.22-bookworm`, `eclipse-temurin:21-jdk`, `ruby:3.3`, `erlang:26` as builder stages adds significant temporary space but doesn't affect the final image.
+Using `node:lts`, `python:3.12-slim`, `golang:1.22-bookworm`, `eclipse-temurin:21-jdk`, `ruby:3.3`, `erlang:26` as builder stages adds significant temporary space but doesn't affect the final image.
 
 ## .dockerignore
 

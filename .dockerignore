@@ -1,1 +1,15 @@
 # Root marker for: dockerls
+.git
+.github
+*.md
+!Dockerfile
+!DOCKERFILE-GUIDE.md
+!LSP-SERVERS.md
+!AGENTS.md
+!OMP-CONFIG.md
+node_modules
+*.log
+.omp/agent/sessions
+.omp/agent/*.db*
+.omp/logs
+.lsp_trigger
