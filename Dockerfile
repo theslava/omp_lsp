@@ -104,7 +104,7 @@ FROM node:lts AS perl-lsp
 RUN npm install -g perlnavigator-server
 
 FROM perl:5.38-slim AS perl-runtime
-RUN cpanm --quiet --no-interaction PPI Class::Inspector Devel::Symdump Sub::Util Scalar::Util List::Util File::Spec Storable File::Basename Encode 2>/dev/null || true
+RUN apt-get update && apt-get install -y --no-install-recommends gcc && cpanm --quiet --no-interaction PPI Class::Inspector Devel::Symdump Sub::Util Scalar::Util List::Util File::Spec Storable File::Basename Encode Perl::Critic Perl::Tidy App::perlimports && apt-get purge -y gcc && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 # ============================================================
 # Stage 7: Erlang/Elixir servers
 # ============================================================
