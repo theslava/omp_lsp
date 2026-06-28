@@ -36,7 +36,7 @@ RUN pip install --no-cache-dir \
 # ============================================================
 # Stage 3: Go LSP servers
 # ============================================================
-FROM golang:1.22-bookworm AS go-lsp
+FROM golang:trixie AS go-lsp
 RUN go install golang.org/x/tools/gopls@latest
 
 # ============================================================
@@ -57,7 +57,7 @@ RUN curl -L https://github.com/zigtools/zls/releases/latest/download/zls-x86_64-
 
 # Lua language server (exact version in URL, no wildcard)
 RUN curl -L https://github.com/LuaLS/lua-language-server/releases/download/3.18.2/lua-language-server-3.18.2-linux-x64.tar.gz \
-    | tar xz -C /tmp && mv /tmp/lua-language-server /opt/lua-language-server
+    | tar xz -C /tmp && mv /tmp/bin/lua-language-server /opt/lua-language-server
 
 # Terraform LS (v0.30.0 last release with Linux assets; v0.38+ has none)
 RUN curl -L https://github.com/hashicorp/terraform-ls/releases/download/v0.30.0/terraform-ls_0.30.0_linux_amd64.zip \
@@ -72,16 +72,16 @@ RUN curl -L https://github.com/latex-lsp/texlab/releases/latest/download/texlab-
     | tar xz -C /tmp && mv /tmp/texlab /usr/local/bin/texlab
 
 # Helm LS (hypnos1/helm-ls repo deleted; use mrjosh/helm-ls fork)
-RUN curl -L https://github.com/mrjosh/helm-ls/releases/latest/download/helm_ls_linux_x86_64.tar.gz \
-    | tar xz -C /tmp && mv /tmp/helm_ls /usr/local/bin/helm_ls
+RUN curl -L https://github.com/mrjosh/helm-ls/releases/latest/download/helm_ls_linux_amd64 \
+    -o /usr/local/bin/helm_ls
 
 # Nixd
-RUN curl -L https://github.com/nix-community/nixd/releases/latest/download/nixd-x86_64-linux-deb12.tar.xz \
-    | tar xJ -C /tmp && mv /tmp/nixd /usr/local/bin/nixd && chmod +x /usr/local/bin/nixd
+#RUN curl -L https://github.com/nix-community/nixd/releases/latest/download/nixd-x86_64-linux-deb12.tar.xz \
+#    | tar xJ -C /tmp && mv /tmp/nixd /usr/local/bin/nixd && chmod +x /usr/local/bin/nixd
 
 # Nil (nil-editor, the Nix language server)
-RUN curl -L https://github.com/oxalica/nil/releases/latest/download/nil-x86_64-unknown-linux-gnu.tar.gz \
-    | tar xz -C /tmp && mv /tmp/nil /usr/local/bin/nil && chmod +x /usr/local/bin/nil
+#RUN curl -L https://github.com/oxalica/nil/releases/latest/download/nil-x86_64-unknown-linux-gnu.tar.gz \
+#    | tar xz -C /tmp && mv /tmp/nil /usr/local/bin/nil && chmod +x /usr/local/bin/nil
 
 # ============================================================
 # Stage 5: Kotlin Language Server
@@ -112,34 +112,34 @@ RUN mkdir -p /opt/hls-bin && \
 # ============================================================
 # Stage 7: OCaml LSP — source tarball (compiled binary inside)
 # ============================================================
-FROM ubuntu:24.04 AS ocamllsp
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl ca-certificates bzip2 \
-    && rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /tmp/ocaml-lsp-src && \
-    curl -L https://github.com/ocaml/ocaml-lsp/releases/latest/download/lsp-1.27.0.tbz \
-        -o /tmp/lsp.tbz && tar xjf /tmp/lsp.tbz -C /tmp/ocaml-lsp-src && \
-    find /tmp/ocaml-lsp-src -name 'lsp' -type f | head -1 | while read bin; do \
-        echo "Found lsp binary at $bin"; cp "$bin" /usr/local/bin/ocamllsp; \
-    done || { \
-        find /tmp/ocaml-lsp-src -name 'ocamllsp' -o -name '*.exe' 2>/dev/null | head -1 | while read bin; do \
-            cp "$bin" /usr/local/bin/ocamllsp; chmod +x /usr/local/bin/ocamllsp; \
-        done || true; \
-    }
+#FROM ubuntu:24.04 AS ocamllsp
+#RUN apt-get update && apt-get install -y --no-install-recommends \
+#    curl ca-certificates bzip2 \
+#    && rm -rf /var/lib/apt/lists/*
+#RUN mkdir -p /tmp/ocaml-lsp-src && \
+#    curl -L https://github.com/ocaml/ocaml-lsp/releases/latest/download/lsp-1.27.0.tbz \
+#        -o /tmp/lsp.tbz && tar xjf /tmp/lsp.tbz -C /tmp/ocaml-lsp-src && \
+#    find /tmp/ocaml-lsp-src -name 'lsp' -type f | head -1 | while read bin; do \
+#        echo "Found lsp binary at $bin"; cp "$bin" /usr/local/bin/ocamllsp; \
+#    done || { \
+#        find /tmp/ocaml-lsp-src -name 'ocamllsp' -o -name '*.exe' 2>/dev/null | head -1 | while read bin; do \
+#            cp "$bin" /usr/local/bin/ocamllsp; chmod +x /usr/local/bin/ocamllsp; \
+#        done || true; \
+#    }
 
 # ============================================================
 # Stage 8: OmniSharp Roslyn (.NET C#/VB/F# language server)
 # ============================================================
-FROM ubuntu:24.04 AS omnisharp
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl ca-certificates unzip \
-    && rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /opt/omnisharp && \
-    curl -L https://github.com/OmniSharp/omnisharp-roslyn/releases/latest/download/omnisharp-linux-x64.tar.gz \
-        -o /tmp/omnisharp.tar.gz && tar xzf /tmp/omnisharp.tar.gz -C /opt/omnisharp && \
-    for d in /opt/omnisharp/*/; do [ -d "$d" ] && mv "$d"* /opt/omnisharp/ && rmdir "$d"; break; done && \
-    chmod +x /opt/omnisharp/omnisharp && \
-    ln -sf /opt/omnisharp/omnisharp /usr/local/bin/omnisharp
+#FROM ubuntu:24.04 AS omnisharp
+#RUN apt-get update && apt-get install -y --no-install-recommends \
+#    curl ca-certificates unzip \
+#    && rm -rf /var/lib/apt/lists/*
+#RUN mkdir -p /opt/omnisharp && \
+#    curl -L https://github.com/OmniSharp/omnisharp-roslyn/releases/latest/download/omnisharp-linux-x64.tar.gz \
+#        -o /tmp/omnisharp.tar.gz && tar xzf /tmp/omnisharp.tar.gz -C /opt/omnisharp && \
+#    for d in /opt/omnisharp/*/; do [ -d "$d" ] && mv "$d"* /opt/omnisharp/ && rmdir "$d"; break; done && \
+#    chmod +x /opt/omnisharp/omnisharp && \
+#    ln -sf /opt/omnisharp/omnisharp /usr/local/bin/omnisharp
 
 # ============================================================
 # Stage 9: JVM-based servers (Java, Scala) — Metals via Maven/coursier
@@ -189,16 +189,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc && cpanm --
 # ============================================================
 # Stage 12: Erlang/Elixir servers
 # ============================================================
-FROM elixir:1.17-slim AS erlang-lsp
-
-RUN curl -L https://github.com/elixir-lsp/elixir-ls/releases/latest/download/elixir-ls-v0.31.1.zip \
-    -o /tmp/elixir-ls.zip && unzip -q /tmp/elixir-ls.zip -d /opt/elixir-ls && \
-    cat > /usr/local/bin/elixir_ls << 'WRAPPER'
-#!/bin/sh
-export ELS_INSTALL_PREFIX=/opt/elixir-ls
-exec "$ELS_INSTALL_PREFIX/language_server.sh" "$@"
-WRAPPER
-    chmod +x /usr/local/bin/elixir_ls && rm -f /tmp/elixir-ls.zip
+#FROM elixir:1.17-slim AS erlang-lsp
+#
+#RUN curl -L https://github.com/elixir-lsp/elixir-ls/releases/latest/download/elixir-ls-v0.31.1.zip \
+#    -o /tmp/elixir-ls.zip && unzip -q /tmp/elixir-ls.zip -d /opt/elixir-ls
+#RUN cat > /usr/local/bin/elixir_ls << 'WRAPPER'
+##!/bin/sh
+#export ELS_INSTALL_PREFIX=/opt/elixir-ls
+#exec "$ELS_INSTALL_PREFIX/language_server.sh" "$@"
+#WRAPPER
+#RUN chmod +x /usr/local/bin/elixir_ls
 
 # expert — removed (gleam-lang/expert repo is gone, 404)
 # erlang_ls — removed (not available on PyPI, project discontinued)
@@ -227,21 +227,21 @@ COPY --from=downloader /usr/local/bin/terraform-ls /usr/local/bin/terraform-ls
 COPY --from=downloader /usr/local/bin/marksman /usr/local/bin/marksman
 COPY --from=downloader /usr/local/bin/texlab /usr/local/bin/texlab
 COPY --from=downloader /usr/local/bin/helm_ls /usr/local/bin/helm_ls
-COPY --from=downloader /usr/local/bin/nixd /usr/local/bin/nixd
-COPY --from=downloader /usr/local/bin/nil /usr/local/bin/nil
+#COPY --from=downloader /usr/local/bin/nixd /usr/local/bin/nixd
+#COPY --from=downloader /usr/local/bin/nil /usr/local/bin/nil
 COPY --from=downloader /opt/lua-language-server /opt/lua-language-server
 COPY --from=kotlin-lsp /usr/local/bin/kotlin-ls /usr/local/bin/kotlin-ls
 COPY --from=hls /usr/local/bin/hls /usr/local/bin/hls
-COPY --from=ocamllsp /usr/local/bin/ocamllsp /usr/local/bin/ocamllsp || true
-COPY --from=omnisharp /usr/local/bin/omnisharp /usr/local/bin/omnisharp || true
+#COPY --from=ocamllsp /usr/local/bin/ocamllsp /usr/local/bin/ocamllsp || true
+#COPY --from=omnisharp /usr/local/bin/omnisharp /usr/local/bin/omnisharp || true
 COPY --from=jvm-lsp /opt/jdtls /opt/jdtls/
 COPY --from=jvm-lsp /usr/local/bin/metals /usr/local/bin/metals
 COPY --from=ruby-lsp /usr/local/bin /usr/local/bin
-COPY --from=erlang-lsp /usr/local/bin /usr/local/bin
+#COPY --from=erlang-lsp /usr/local/bin /usr/local/bin
 COPY --from=perl-lsp /usr/local/bin/perlnavigator /usr/local/bin/perlnavigator
 COPY --from=perl-runtime /usr/local/bin/perl /usr/local/bin/perl
 COPY --from=perl-runtime /usr/local/lib/perl5 /usr/local/lib/perl5
-COPY --from=perl-runtime /etc/perl /etc/perl
+#COPY --from=perl-runtime /etc/perl /etc/perl
 
 # Create non-root user
 RUN sed -ie 's/ubuntu/slava/g' /etc/passwd* /etc/group* \
@@ -253,11 +253,11 @@ ENV PATH="/home/slava/.local/bin:$PATH"
 RUN curl -fsSL https://omp.sh/install | bash
 
 # Copy MCP config
-COPY --chown=slava:slava .omp/mcp.json /home/slava/.omp/mcp.json
+#COPY --chown=slava:slava .omp/mcp.json /home/slava/.omp/mcp.json
 
 # Copy agent definitions
-RUN mkdir -p /home/slava/.omp/agent/agents
-COPY --chown=slava:slava .omp/agents/ /home/slava/.omp/agent/agents/
+#RUN mkdir -p /home/slava/.omp/agent/agents
+#COPY --chown=slava:slava .omp/agents/ /home/slava/.omp/agent/agents/
 
 WORKDIR /workspace
 VOLUME ["/workspace"]
